@@ -12,6 +12,8 @@ Um reprodutor de músicas completo e interativo, desenvolvido em Python e Flask,
 - ✅ Exibição das informações da música atual: nome, duração e tempo reproduzido
 - ✅ Seleção de gênero musical para playlist personalizada
 - ✅ Interface terminal amigável através de menu interativo (opcional via `main.py`)
+- ✅ Pronto para deploy com Docker e compatível com plataformas como Fly.io
+- ✅ Suporte para ambientes sem dispositivo de áudio (ex: servidores cloud)
 
 ## 📁 Estrutura do Projeto
 ```plaintext
@@ -29,7 +31,9 @@ Um reprodutor de músicas completo e interativo, desenvolvido em Python e Flask,
 ├── server.py
 ├── main.py (uso via terminal)
 ├── requirements.txt
-└── Procfile
+├── Dockerfile
+├── Procfile
+└── README.md
 ```
 
 ## 🔧 Instalação e Configuração
@@ -39,7 +43,7 @@ Certifique-se de ter o Python instalado (3.8 ou superior recomendado).
 **1. Clone o repositório**
 ```bash
 git clone <url-do-seu-repositorio>
-cd music-player
+cd music_player_project
 ```
 
 **2. Crie e ative um ambiente virtual**
@@ -65,11 +69,10 @@ pip install -r requirements.txt
 ### Opção A - Servidor Web com Frontend
 Inicie o servidor web usando Flask e Gunicorn:
 ```bash
-gunicorn server:app
+gunicorn server:app --bind 0.0.0.0:8080
 ```
-Agora acesse a aplicação em seu navegador através de:
-[http://localhost:8000](http://localhost:8000)
-
+Acesse a aplicação em seu navegador através de:
+[http://localhost:8080](http://localhost:8080)
 
 ### Opção B - Terminal Interativo
 Para uma interface textual interativa, execute no terminal:
@@ -78,16 +81,18 @@ python main.py
 ```
 
 ## 📸 Demonstração Visual
-*(Aqui você pode adicionar imagens ou GIFs demonstrativos do funcionamento visual da aplicação momento oportuno.)*
+*(Aqui você pode adicionar imagens ou GIFs demonstrativos do funcionamento visual da aplicação no momento oportuno.)*
 
 ## 🛠️ Tecnologias Utilizadas
 - **Backend:** Python, Flask
 - **Frontend:** HTML, CSS, JavaScript
 - **Bibliotecas Adicionais:** pygame (áudio), mutagen (metadados de áudio), PyQt5
+- **Deploy:** Docker, Gunicorn, Fly.io
 
 ## 👤 Autor
-Desenvolvido por FURIOUSOFNIGHT.
+Desenvolvido por **FURIOUSOFNIGHT**.
 
 ---
 
 🎧 Aproveite sua experiência musical! 🎶
+
