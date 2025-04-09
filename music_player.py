@@ -11,8 +11,11 @@ IS_RENDER = os.environ.get("RENDER", "false").lower() == "true"
 # Inicialização segura do pygame
 if not IS_RENDER:
     try:
+        import pygame
         pygame.init()
         pygame.mixer.init()
+    except ImportError:
+        logging.warning("pygame não está disponível. Ignorando inicialização.")
     except pygame.error as error:
         raise RuntimeError(f"Erro ao inicializar o pygame: {error}")
 else:

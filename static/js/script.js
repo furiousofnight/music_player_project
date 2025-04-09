@@ -137,9 +137,13 @@ document.addEventListener("DOMContentLoaded", () => {
                 alert(`Erro: ${data.error}`);
                 return;
             }
-            currentPlayingIndex = index;
+
+            // Atualiza o elemento de áudio com a URL da música
+            const audioPlayer = document.getElementById("audio-player");
+            audioPlayer.src = data.song_url;
+            audioPlayer.play();
+
             currentSongDisplay.textContent = `🎶 Tocando agora: ${data.current_song}`;
-            startTimer(); // Inicia o temporizador
         } catch (err) {
             console.error("Erro ao iniciar a música:", err);
         }
