@@ -6,6 +6,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const genreDisplay = document.getElementById("genre");
     const timeDisplay = document.getElementById("time");
     const progressBar = document.getElementById("progress-bar");
+    const audioPlayer = document.getElementById("audio-player");
 
     let intervalId = null;
     let userSeeking = false;
@@ -138,12 +139,11 @@ document.addEventListener("DOMContentLoaded", () => {
                 return;
             }
 
-            // Atualiza o elemento de áudio com a URL da música
-            const audioPlayer = document.getElementById("audio-player");
             audioPlayer.src = data.song_url;
             audioPlayer.play();
 
             currentSongDisplay.textContent = `🎶 Tocando agora: ${data.current_song}`;
+            startTimer();
         } catch (err) {
             console.error("Erro ao iniciar a música:", err);
         }
@@ -163,21 +163,12 @@ document.addEventListener("DOMContentLoaded", () => {
     };
 
     const startTimer = () => {
-        console.log("Iniciando temporizador...");
         clearInterval(intervalId); // Limpa intervalos anteriores
-        intervalId = setInterval(async () => {
-            try {
-                const response = await fetch("/api/info");
-                const data = await response.json();
-                if (data.error) {
-                    clearInterval(intervalId);
-                    currentSongDisplay.textContent = "Nenhuma música tocando";
-                    console.error(data.error);
-                    return;
-                }
-                updateProgressBar(data.info.time_played, data.info.duration);
-            } catch (error) {
-                console.error("Erro ao atualizar progresso:", error);
+        intervalId = setInterval(() => {
+            if (!audioPlayer.paused) {
+                const currentTime = Math.floor(audioPlayer.currentTime);
+                const duration = Math.floor(audioPlayer.duration || 0);
+                updateProgressBar(currentTime, duration);
             }
         }, 1000);
     };
@@ -195,22 +186,10 @@ document.addEventListener("DOMContentLoaded", () => {
         timeDisplay.textContent = `Tempo: ${formatTime(progressBar.value)} / ${formatTime(progressBar.max)}`;
     });
 
-    progressBar.addEventListener("change", async () => {
+    progressBar.addEventListener("change", () => {
         const time = parseInt(progressBar.value, 10);
-        try {
-            const response = await fetch("/api/set_position", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ time }),
-            });
-            if (!response.ok) throw new Error("Erro ao ajustar posição");
-            await response.json();
-            userSeeking = false;
-            startTimer(); // Reinicia o temporizador
-        } catch (error) {
-            console.error("Erro ao ajustar posição:", error);
-            userSeeking = false;
-        }
+        audioPlayer.currentTime = time;
+        userSeeking = false;
     });
 
     const capitalize = (str) => str.charAt(0).toUpperCase() + str.slice(1);
