@@ -13,13 +13,21 @@ lock = Lock()
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 
+
 @app.route("/")
 def index():
     return render_template("index.html")
 
+
 @app.route("/media/<path:filename>")
 def serve_song(filename):
-    return send_from_directory(MUSIC_FOLDER, filename)
+    """Serve a song file for playback in the browser."""
+    try:
+        return send_from_directory(MUSIC_FOLDER, filename)
+    except FileNotFoundError:
+        logging.error("Arquivo de música não encontrado: %s", filename)
+        return jsonify({"error": "Arquivo de música não encontrado."}), 404
+
 
 @app.route("/api/musics", methods=["GET"])
 def get_playlist():
@@ -32,6 +40,7 @@ def get_playlist():
         logging.exception("Erro ao obter a playlist.")
         return jsonify({"error": "Erro ao obter a playlist", "details": str(e)}), 500
 
+
 @app.route("/api/play", methods=["POST"])
 def play_music():
     try:
@@ -43,20 +52,36 @@ def play_music():
         if not isinstance(song_index, int) or song_index < 0 or song_index >= len(player.music_list):
             return jsonify({"error": "Índice inválido ou fora dos limites."}), 400
 
+        with lock:
+            player.play_music(song_index)
+
         song_path = player.music_list[song_index]
         song_name = os.path.basename(song_path)
         relative_path = os.path.relpath(song_path, MUSIC_FOLDER).replace("\\", "/")
         song_url = f"/media/{relative_path}"
 
         logging.info("Música selecionada: %s", song_name)
-        return jsonify({"status": "ready", "current_song": song_name, "song_url": song_url})
+        return jsonify({"status": "playing", "current_song": song_name, "song_url": song_url})
+    except ValueError:
+        logging.error("Índice inválido fornecido.")
+        return jsonify({"error": "Índice inválido."}), 400
     except Exception as e:
         logging.exception("Erro ao tentar preparar música.")
         return jsonify({"error": "Não foi possível preparar música.", "details": str(e)}), 500
 
+
 @app.route("/api/stop", methods=["POST"])
 def stop_music():
-    return jsonify({"status": "stopped"})
+    try:
+        with lock:
+            player.stop()
+            player.current_index = -1  # Reseta o índice da música
+        logging.info("Música parada.")
+        return jsonify({"status": "stopped"})
+    except Exception as e:
+        logging.exception("Erro ao parar a música.")
+        return jsonify({"error": "Não foi possível parar a música.", "details": str(e)}), 500
+
 
 @app.route("/api/next", methods=["POST"])
 def next_music():
@@ -76,6 +101,7 @@ def next_music():
         logging.exception("Erro ao mudar para próxima música.")
         return jsonify({"error": "Erro ao avançar música.", "details": str(e)}), 500
 
+
 @app.route("/api/previous", methods=["POST"])
 def previous_music():
     try:
@@ -94,6 +120,7 @@ def previous_music():
         logging.exception("Erro ao voltar música.")
         return jsonify({"error": "Erro ao voltar música.", "details": str(e)}), 500
 
+
 @app.route("/api/shuffle", methods=["POST"])
 def shuffle_music():
     try:
@@ -106,6 +133,7 @@ def shuffle_music():
         logging.exception("Erro ao alternar shuffle.")
         return jsonify({"error": "Não foi possível alterar shuffle.", "details": str(e)}), 500
 
+
 @app.route("/api/repeat", methods=["POST"])
 def repeat_mode():
     try:
@@ -117,6 +145,7 @@ def repeat_mode():
     except Exception as e:
         logging.exception("Erro ao alternar repeat.")
         return jsonify({"error": "Não foi possível alterar repeat.", "details": str(e)}), 500
+
 
 @app.route("/api/info", methods=["GET"])
 def get_info():
@@ -133,6 +162,7 @@ def get_info():
         logging.exception("Erro ao obter informações da música.")
         return jsonify({"error": "Erro ao obter informações.", "details": str(e)}), 500
 
+
 @app.route("/api/genres", methods=["GET"])
 def get_genres():
     try:
@@ -143,6 +173,7 @@ def get_genres():
     except Exception as e:
         logging.exception("Erro ao obter gêneros.")
         return jsonify({"error": "Erro ao obter gêneros.", "details": str(e)}), 500
+
 
 @app.route("/api/select_genre", methods=["POST"])
 def select_genre():
@@ -163,6 +194,7 @@ def select_genre():
         logging.exception("Erro ao selecionar gênero.")
         return jsonify({"error": "Erro ao definir gênero.", "details": str(e)}), 500
 
+
 @app.route("/api/reset_playlist", methods=["POST"])
 def reset_playlist():
     try:
@@ -173,6 +205,7 @@ def reset_playlist():
     except Exception as e:
         logging.exception("Erro ao restaurar playlist.")
         return jsonify({"error": "Erro ao restaurar playlist.", "details": str(e)}), 500
+
 
 if __name__ == "__main__":
     port = int(os.getenv("PORT", "5000"))

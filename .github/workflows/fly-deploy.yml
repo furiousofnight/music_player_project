@@ -3,7 +3,7 @@ name: Deploy to Fly.io
 on:
   push:
     branches:
-      - main  # ou o branch que você usa
+      - main  # Branch que dispara o deploy
 
 jobs:
   deploy:
@@ -14,10 +14,12 @@ jobs:
       - name: 📥 Clonar repositório
         uses: actions/checkout@v3
 
-      - name: 🐍 Setup Python
+      - name: 🐍 Configurar Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.11'
+          python-version: '3.13'  # Versão do Python a ser utilizada
+          cache: 'pip'  # Habilitar cache para dependências do pip
+          cache-dependency-path: requirements.txt  # Caminho para o arquivo de dependências
 
       - name: 🧪 Instalar dependências e rodar lint (opcional)
         run: |
@@ -25,10 +27,10 @@ jobs:
           pip install -r requirements.txt
           pylint $(git ls-files '*.py') || true
 
-      - name: 🔐 Login no Fly.io
+      - name: 🔐 Configurar Fly.io CLI
         uses: superfly/flyctl-actions/setup-flyctl@master
 
-      - name: 🚀 Deploy para Fly.io
+      - name: 🚀 Realizar Deploy para Fly.io
         run: flyctl deploy --remote-only
         env:
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
