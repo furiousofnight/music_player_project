@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Um reprodutor de músicas interativo com suporte a diversos gêneros.">
+    <meta name="author" content="FURIOUSOFNIGHT">
+    <title>🎵 Music Player 🎵</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body>
+    <!-- Cabeçalho -->
+    <header>
+        <h1>🎧 Bem-vindo ao Music Player 🎧</h1>
+        <h2>FURIOUSOFNIGHT MUSIC</h2>
+        <p>🎸Selecione o gênero que deseja ouvir antes de começar!🎸</p>
+    </header>
+
+    <!-- Conteúdo Principal -->
+    <main>
+        <!-- Seleção de Gênero -->
+        <section class="genre-selection" aria-labelledby="genre-selection-title">
+            <h2 id="genre-selection-title">🎸 Escolha o seu Gênero 🎸</h2>
+            <div class="genre-select-wrapper">
+                <label for="genre-select">Gêneros:</label>
+                <select id="genre-select" aria-label="Seleção de Gênero" class="custom-select">
+                    <option value="" disabled selected>Selecione um gênero</option>
+                </select>
+            </div>
+            <button id="load-genre" class="custom-button" aria-label="Carregar músicas do gênero selecionado">
+                <i class="fas fa-music"></i> Carregar Gênero
+            </button>
+        </section>
+
+        <!-- Music Player -->
+        <section class="player" aria-labelledby="player-section-title">
+            <h2 id="player-section-title">🎶 Player de Música 🎶</h2>
+            <div class="info">
+                <h2 id="current-song">Nenhuma música tocando</h2>
+                <p id="genre">Gênero: N/A</p>
+                <p id="time">Tempo reproduzido: 00:00</p>
+                <div class="progress-container">
+                    <label for="progress-bar" class="sr-only">Barra de progresso da música</label>
+                    <input id="progress-bar" type="range" min="0" max="100" value="0" step="0.1"
+                        aria-label="Barra de progresso">
+                </div>
+            </div>
+            <div class="controls">
+                <button id="prev" class="control-btn" aria-label="Música anterior"><i class="fas fa-step-backward"></i></button>
+                <button id="play" class="control-btn" aria-label="Reproduzir música"><i class="fas fa-play"></i></button>
+                <button id="stop" class="control-btn" aria-label="Parar música"><i class="fas fa-stop"></i></button>
+                <button id="next" class="control-btn" aria-label="Próxima música"><i class="fas fa-step-forward"></i></button>
+            </div>
+            <div class="modes">
+                <button id="shuffle" class="mode-btn" aria-label="Ativar/desativar Shuffle"><i class="fas fa-random"></i> Shuffle</button>
+                <button id="repeat" class="mode-btn" aria-label="Ativar/desativar Repeat"><i class="fas fa-redo-alt"></i> Repeat</button>
+            </div>
+        </section>
+
+        <!-- Playlist -->
+        <section class="playlist" aria-labelledby="playlist-section-title">
+            <h2 id="playlist-section-title">🎵 Playlist 🎵</h2>
+            <ul id="playlist" aria-live="polite"></ul>
+        </section>
+    </main>
+
+    <!-- Rodapé -->
+    <footer>
+        <p>🎵Desenvolvido Por FURIOUSOFNIGHT | &copy; 2026 - Furious Music Player🎵</p>
+    </footer>
+
+    <script src="/static/js/script.js"></script>
+</body>
+</html>
