@@ -4,21 +4,26 @@ import threading
 import random
 import pygame
 
+# Detecta se está em ambiente de produção (Render, CI/CD, etc)
+IS_RENDER = os.environ.get("RENDER", "false").lower() == "true"
+
+# Inicialização segura do pygame
+if not IS_RENDER:
+    try:
+        pygame.init()
+        pygame.mixer.init()
+    except pygame.error as error:
+        raise RuntimeError(f"Erro ao inicializar o pygame: {error}")
+else:
+    print("Modo servidor detectado — pygame não será inicializado.")
 
 def _normalize_string(string: str) -> str:
     """Normaliza 'strings' para buscas consistentes."""
     return string.lower().strip().replace("-", " ").replace("_", " ")
 
-
 class MusicPlayer:
     def __init__(self, music_folder: str = "songs"):
         """Inicializa o reprodutor de música."""
-        try:
-            pygame.init()
-            pygame.mixer.init()
-        except pygame.error as error:
-            raise RuntimeError(f"Erro ao inicializar o pygame: {error}")
-
         self.music_folder = music_folder
         self.music_list: list[str] = []
         self.current_index: int = -1
@@ -74,6 +79,10 @@ class MusicPlayer:
 
     def play_music(self, query: int | str | None = None) -> None:
         """Reproduz uma música (por índice, nome ou aleatória)."""
+        if IS_RENDER:
+            print("Reprodução de áudio desativada no ambiente Render.")
+            return
+
         with self.lock:
             if not self.music_list:
                 print("Nenhuma música disponível.")
@@ -101,6 +110,10 @@ class MusicPlayer:
 
     def _play_next_random(self) -> None:
         """Reproduz uma música aleatória sem repetir."""
+        if IS_RENDER:
+            print("Reprodução de áudio desativada no ambiente Render.")
+            return
+
         if not self.music_list:
             print("Nenhuma música disponível para reprodução.")
             return
@@ -116,6 +129,8 @@ class MusicPlayer:
 
     def _play_current_music(self) -> None:
         """Inicia a música atual."""
+        if IS_RENDER:
+            return
         try:
             pygame.mixer.music.load(self.music_list[self.current_index])
             pygame.mixer.music.play(-1 if self.loop else 0)
@@ -127,7 +142,8 @@ class MusicPlayer:
 
     def stop(self) -> None:
         """Para a reprodução da música."""
-        pygame.mixer.music.stop()
+        if not IS_RENDER:
+            pygame.mixer.music.stop()
         self.playing = False
 
     def toggle_shuffle_without_repeat(self) -> bool:
@@ -146,7 +162,10 @@ class MusicPlayer:
             return {"error": "Nenhuma música está tocando."}
 
         music = self.music_list[self.current_index]
-        elapsed = max(0, pygame.mixer.music.get_pos() // 1000)
+        if not IS_RENDER:
+            elapsed = max(0, pygame.mixer.music.get_pos() // 1000)
+        else:
+            elapsed = self.position
         self.position = elapsed
         return {
             "current_song": os.path.basename(music),
@@ -158,6 +177,9 @@ class MusicPlayer:
 
     def set_position(self, time: int) -> None:
         """Ajusta a posição da música."""
+        if IS_RENDER:
+            return
+
         if not self.playing or self.current_index == -1:
             raise Exception("Nenhuma música está tocando.")
 
@@ -188,4 +210,5 @@ class MusicPlayer:
 
     def quit(self) -> None:
         """Finaliza o mixer do pygame."""
-        pygame.mixer.quit()
+        if not IS_RENDER:
+            pygame.mixer.quit()
