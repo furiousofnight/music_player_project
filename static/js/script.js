@@ -85,7 +85,7 @@ document.addEventListener("DOMContentLoaded", () => {
         fetch("/api/select_genre", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ genre: selectedGenre }),
+            body: JSON.stringify({ genre: selectedGenre })
         })
             .then((response) => {
                 if (!response.ok) throw new Error(`Erro ao carregar playlist do gênero: ${response.status}`);
@@ -123,7 +123,7 @@ document.addEventListener("DOMContentLoaded", () => {
         fetch("/api/play", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ index }),
+            body: JSON.stringify({ index })
         })
             .then((response) => response.json())
             .then((data) => {
@@ -131,6 +131,28 @@ document.addEventListener("DOMContentLoaded", () => {
                     alert(`Erro: ${data.error}`);
                     return;
                 }
+
+                // Criação dinâmica do elemento <audio>
+                const audioElement = document.createElement("audio");
+                audioElement.id = "audio-player";
+                audioElement.src = data.song_url; // URL da música recebida do backend
+                audioElement.controls = true;
+                audioElement.autoplay = true; // Inicia automaticamente ao carregar
+                audioElement.addEventListener("ended", () => {
+                    if (isRepeatActive) {
+                        playSong(currentPlayingIndex); // Repete a música se a opção estiver ativada
+                    } else {
+                        nextSong(); // Vai para a próxima música caso o repeat não esteja ativo
+                    }
+                });
+
+                // Adiciona o player à página
+                const existingPlayer = document.getElementById("audio-player");
+                if (existingPlayer) {
+                    existingPlayer.remove(); // Remove o player anterior, se houver
+                }
+                document.body.appendChild(audioElement);
+
                 currentPlayingIndex = index;
                 currentSongDisplay.textContent = `🎶 Tocando agora: ${data.current_song}`;
                 startTimer();
@@ -186,7 +208,7 @@ document.addEventListener("DOMContentLoaded", () => {
         fetch("/api/set_position", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ time }),
+            body: JSON.stringify({ time })
         })
             .then((response) => {
                 if (!response.ok) throw new Error("Erro ao ajustar posição");
