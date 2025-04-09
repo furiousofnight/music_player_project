@@ -14,7 +14,7 @@ if not IS_RENDER:
         pygame.init()
         pygame.mixer.init()
     except pygame.error as error:
-        raise RuntimeError(f"Erro ao inicializar o pygame: {error}")
+        raise RuntimeError("Erro ao inicializar o pygame: %s" % error)
 else:
     logging.warning("Modo servidor detectado — pygame não será inicializado.")
 
@@ -64,7 +64,7 @@ class MusicPlayer:
                     else:
                         self.duration_cache[song] = 0
                 except (MutagenError, AttributeError) as e:
-                    logging.warning(f"Erro ao processar duração de '{song}': {e}")
+                    logging.warning("Erro ao processar duração de '%s': %s", song, e)
                     self.duration_cache[song] = 0
 
     def get_current_duration(self) -> int:
@@ -93,7 +93,7 @@ class MusicPlayer:
                         self.current_index = index
                         break
                 else:
-                    raise ValueError(f"Música '{query}' não encontrada.")
+                    raise ValueError("Música '%s' não encontrada." % query)
             elif self.shuffle_without_repeat:
                 self._play_next_random()
                 return
@@ -129,7 +129,7 @@ class MusicPlayer:
             self.position = 0
             self.playing = True
         except pygame.error as e:
-            logging.error(f"Erro ao carregar a música: {e}")
+            logging.error("Erro ao carregar a música: %s", e)
             self.playing = False
 
     def stop(self) -> None:
@@ -173,14 +173,14 @@ class MusicPlayer:
 
         duration = self.get_current_duration()
         if time > duration:
-            raise ValueError(f"Tempo excede a duração ({duration} segundos).")
+            raise ValueError("Tempo excede a duração (%d segundos)." % duration)
 
         try:
             pygame.mixer.music.stop()
             pygame.mixer.music.play(loops=-1 if self.loop else 0, start=time)
             self.position = time
         except pygame.error as e:
-            raise Exception(f"Erro ao ajustar posição: {str(e)}")
+            raise Exception("Erro ao ajustar posição: %s" % str(e)) from e
 
     def select_genre(self, genre: str) -> None:
         if genre not in self.genres:

@@ -1,8 +1,11 @@
 from music_player import MusicPlayer
+import logging
 
 
 def main():
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
     player = MusicPlayer(music_folder="songs")
+
     while True:
         print("\n🎵 MENU DO PLAYER 🎵")
         print("[1] ▶ Reproduzir música")
@@ -54,13 +57,20 @@ def main():
                     print(f"{i}. {song}")
             elif choice == "9":
                 print("\n🎸 Gêneros disponíveis:")
-                for i, genre in enumerate(player.genres.keys(), start=1):
+                genres = list(player.genres.keys())
+                for i, genre in enumerate(genres, start=1):
                     print(f"{i}. {genre}")
                 genre_choice = input("Digite o número do gênero: ").strip()
                 if genre_choice.isdigit():
-                    selected_genre = list(player.genres.keys())[int(genre_choice) - 1]
-                    player.select_genre(selected_genre)
-                    print(f"🎸 Gênero selecionado: {selected_genre}")
+                    idx = int(genre_choice) - 1
+                    if 0 <= idx < len(genres):
+                        selected_genre = genres[idx]
+                        player.select_genre(selected_genre)
+                        print(f"🎸 Gênero selecionado: {selected_genre}")
+                    else:
+                        print("Número de gênero inválido.")
+                else:
+                    print("Entrada inválida.")
             elif choice == "10":
                 player.reset_playlist()
                 print("Playlist restaurada.")
@@ -71,7 +81,8 @@ def main():
             else:
                 print("Opção inválida. Tente novamente.")
         except Exception as e:
-            print(f"Erro: {e}")
+            logging.exception("Erro no menu interativo:")
+            print(f"Erro: {str(e)}")
 
 
 if __name__ == "__main__":
