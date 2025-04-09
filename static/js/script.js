@@ -1,5 +1,4 @@
 document.addEventListener("DOMContentLoaded", () => {
-    // Elementos principais
     const genreSelect = document.getElementById("genre-select");
     const loadGenreButton = document.getElementById("load-genre");
     const playlistElement = document.getElementById("playlist");
@@ -8,18 +7,16 @@ document.addEventListener("DOMContentLoaded", () => {
     const timeDisplay = document.getElementById("time");
     const progressBar = document.getElementById("progress-bar");
 
-    let intervalId = null; // ID do intervalo de atualização
-    let userSeeking = false; // Indica se o usuário está manipulando a barra de progresso
-    let currentPlayingIndex = -1; // Índice da música atual
-    let isRepeatActive = false; // Estado do botão repetir (sincronizado com o backend)
-    let isShuffleActive = false; // Estado do modo shuffle (sincronizado com o backend)
-    let isProcessing = false; // Controle de cliques repetidos (ex.: repeat/shuffle)
+    let intervalId = null;
+    let userSeeking = false;
+    let currentPlayingIndex = -1;
+    let isRepeatActive = false;
+    let isShuffleActive = false;
+    let isProcessing = false;
 
-    // Ativar/desativar o modo repeat
     const toggleRepeat = () => {
-        if (isProcessing) return; // Evita cliques repetidos durante processamento
+        if (isProcessing) return;
         isProcessing = true;
-
         const repeatBtn = document.getElementById("repeat");
         fetch("/api/repeat", { method: "POST", headers: { "Content-Type": "application/json" } })
             .then((response) => {
@@ -27,7 +24,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 return response.json();
             })
             .then((data) => {
-                isRepeatActive = data.repeat_status === "ativado"; // Atualiza status
+                isRepeatActive = data.repeat_status === "ativado";
                 repeatBtn.classList.toggle("active", isRepeatActive);
                 alert(`Modo repetir ${isRepeatActive ? "ativado" : "desativado"}`);
             })
@@ -35,11 +32,9 @@ document.addEventListener("DOMContentLoaded", () => {
             .finally(() => (isProcessing = false));
     };
 
-    // Ativar/desativar o modo shuffle
     const toggleShuffle = () => {
         if (isProcessing) return;
         isProcessing = true;
-
         const shuffleBtn = document.getElementById("shuffle");
         fetch("/api/shuffle", { method: "POST", headers: { "Content-Type": "application/json" } })
             .then((response) => {
@@ -55,7 +50,6 @@ document.addEventListener("DOMContentLoaded", () => {
             .finally(() => (isProcessing = false));
     };
 
-    // Carregar gêneros
     const loadGenres = () => {
         fetch("/api/genres")
             .then((response) => {
@@ -81,7 +75,6 @@ document.addEventListener("DOMContentLoaded", () => {
             .catch((error) => console.error("Erro ao carregar gêneros:", error));
     };
 
-    // Carregar músicas do gênero selecionado
     const loadGenrePlaylist = () => {
         const selectedGenre = genreSelect.value;
         if (!selectedGenre) {
@@ -102,7 +95,6 @@ document.addEventListener("DOMContentLoaded", () => {
             .catch((error) => console.error("Erro ao carregar a playlist do gênero:", error));
     };
 
-    // Atualizar exibição da playlist
     const updatePlaylistDisplay = (playlist, genre) => {
         genreDisplay.textContent = `Gênero: ${capitalize(genre) || "Desconhecido"}`;
         playlistElement.innerHTML = "";
@@ -127,7 +119,6 @@ document.addEventListener("DOMContentLoaded", () => {
         progressBar.value = 0;
     };
 
-    // Reproduzir música por índice
     const playSong = (index) => {
         fetch("/api/play", {
             method: "POST",
@@ -140,27 +131,25 @@ document.addEventListener("DOMContentLoaded", () => {
                     alert(`Erro: ${data.error}`);
                     return;
                 }
-                currentPlayingIndex = index; // Atualiza o índice atual
+                currentPlayingIndex = index;
                 currentSongDisplay.textContent = `🎶 Tocando agora: ${data.current_song}`;
-                startTimer(); // Inicia o temporizador
+                startTimer();
             })
             .catch((err) => console.error("Erro ao iniciar a música:", err));
     };
 
-    // Parar música
     const stopSong = () => {
         fetch("/api/stop", { method: "POST" })
             .then(() => {
-                clearInterval(intervalId); // Para o temporizador
-                currentPlayingIndex = -1; // Reseta o índice atual
+                clearInterval(intervalId);
+                currentPlayingIndex = -1;
                 currentSongDisplay.textContent = "Nenhuma música tocando";
                 timeDisplay.textContent = "Tempo reproduzido: 00:00";
-                progressBar.value = 0; // Reseta a barra de progresso
+                progressBar.value = 0;
             })
             .catch((error) => console.error("Erro ao parar a música:", error));
     };
 
-    // Iniciar temporizador de progresso
     const startTimer = () => {
         clearInterval(intervalId);
         intervalId = setInterval(() => {
@@ -168,59 +157,51 @@ document.addEventListener("DOMContentLoaded", () => {
                 .then((response) => response.json())
                 .then((data) => {
                     if (data.error) {
-                        // Mostra uma mensagem, mas para de sincronizar
                         clearInterval(intervalId);
                         currentSongDisplay.textContent = "Nenhuma música tocando";
                         console.error(data.error);
                         return;
                     }
-
-                    // Atualiza a barra de progresso
                     updateProgressBar(data.info.time_played, data.info.duration);
                 })
                 .catch((error) => console.error("Erro ao atualizar progresso:", error));
-       }, 1000);
-};
+        }, 1000);
+    };
 
-    // Atualizar barra de progresso
     const updateProgressBar = (currentTime, duration) => {
-        if (!userSeeking) { // Só atualizar se o usuário não estiver manipulando
+        if (!userSeeking) {
             progressBar.max = duration;
             progressBar.value = currentTime;
             timeDisplay.textContent = `Tempo: ${formatTime(currentTime)} / ${formatTime(duration)}`;
         }
     };
 
-    // Barra de progresso manual (quando o usuário arrasta)
     progressBar.addEventListener("input", () => {
-        userSeeking = true; // Indica que o usuário está manipulando
-        // Atualiza o tempo exibido enquanto a barra é ajustada
+        userSeeking = true;
         timeDisplay.textContent = `Tempo: ${formatTime(progressBar.value)} / ${formatTime(progressBar.max)}`;
     });
 
-    // Quando o usuário soltar a barra de progresso
     progressBar.addEventListener("change", () => {
-        const time = parseInt(progressBar.value, 10); // Tempo escolhido pelo usuário
+        const time = parseInt(progressBar.value, 10);
         fetch("/api/set_position", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ time }), // Atualiza o tempo no backend
+            body: JSON.stringify({ time }),
         })
             .then((response) => {
                 if (!response.ok) throw new Error("Erro ao ajustar posição");
                 return response.json();
             })
             .then(() => {
-                userSeeking = false; // Indica que o usuário terminou de ajustar
-                startTimer(); // Reinicia o temporizador sincronizado a partir do novo ponto
+                userSeeking = false;
+                startTimer();
             })
             .catch((error) => {
                 console.error("Erro ao ajustar posição:", error);
-                userSeeking = false; // Certifica-se de que volta ao estado padrão
+                userSeeking = false;
             });
     });
 
-    // Funções auxiliares
     const capitalize = (str) => str.charAt(0).toUpperCase() + str.slice(1);
     const formatTime = (seconds) => {
         const mins = Math.floor(seconds / 60);
@@ -229,13 +210,11 @@ document.addEventListener("DOMContentLoaded", () => {
     };
     const extractSongName = (path) => path.split("/").pop().replace(/\.(mp3|wav|ogg|flac)$/i, "");
 
-    // Event listeners
     document.getElementById("play").addEventListener("click", () => playSong(0));
     document.getElementById("stop").addEventListener("click", stopSong);
     document.getElementById("repeat").addEventListener("click", toggleRepeat);
     document.getElementById("shuffle").addEventListener("click", toggleShuffle);
     loadGenreButton.addEventListener("click", loadGenrePlaylist);
 
-    // Carregar gêneros ao iniciar
     loadGenres();
 });
