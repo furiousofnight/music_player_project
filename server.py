@@ -1,4 +1,4 @@
-from flask import Flask, jsonify, request, render_template
+from flask import Flask, jsonify, request, render_template, send_from_directory
 from flask_cors import CORS
 from music_player import MusicPlayer
 import logging
@@ -6,7 +6,7 @@ import os
 from threading import Lock
 
 # Configuração do Flask
-app = Flask(__name__)
+app = Flask(__name__, static_folder="static", template_folder="templates")
 CORS(app)
 
 # Configuração do logger
@@ -16,6 +16,16 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(
 MUSIC_FOLDER = "songs"
 player = MusicPlayer(music_folder=MUSIC_FOLDER)
 lock = Lock()  # Lock para operações thread-safe no player
+
+import os
+
+IS_RENDER = os.getenv("RENDER") == "true"
+
+# Inicialização do player
+if IS_RENDER:
+    logging.info("Modo RENDER ativado. Reprodução de música será feita pelo navegador.")
+else:
+    logging.info("Modo local ativado. Reprodução de música será feita pelo backend.")
 
 
 @app.route("/")
@@ -235,5 +245,16 @@ def set_position():
         return jsonify({"success": False, "error": f"Erro interno: {str(e)}"}), 500
 
 
+@app.route("/api/music/<path:filename>", methods=["GET"])
+def serve_music(filename):
+    """Serve arquivos de música para o navegador."""
+    try:
+        return send_from_directory(MUSIC_FOLDER, filename, as_attachment=False)
+    except FileNotFoundError:
+        return jsonify({"error": "Arquivo não encontrado."}), 404
+
+
 if __name__ == "__main__":
-    app.run(debug=True)
+    import os
+    port = int(os.getenv("PORT", 8080))
+    app.run(host="0.0.0.0", port=port)

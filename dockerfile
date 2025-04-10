@@ -11,7 +11,11 @@ ENV RENDER=true
 COPY requirements.txt .
 RUN apt-get update && apt-get install -y libglib2.0-0 libgl1-mesa-glx && \
     python -m pip install --upgrade pip && \
-    python -m pip install -r requirements.txt
+    python -m pip install -r requirements.txt && \
+    apt-get remove -y libglib2.0-0 libgl1-mesa-glx && apt-get autoremove -y
+
+# Certifique-se de que o pygame não está sendo instalado
+RUN python -m pip install -r requirements.txt
 
 # Projeto
 WORKDIR /app

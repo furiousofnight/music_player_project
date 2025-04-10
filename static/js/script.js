@@ -15,6 +15,8 @@ document.addEventListener("DOMContentLoaded", () => {
     let isShuffleActive = false; // Estado do modo shuffle (sincronizado com o backend)
     let isProcessing = false; // Controle de cliques repetidos (ex.: repeat/shuffle)
 
+    const audioPlayer = new Audio();
+
     // Ativar/desativar o modo shuffle
     const toggleShuffle = () => {
         fetch("/api/shuffle", { method: "POST", headers: { "Content-Type": "application/json" } })
@@ -124,9 +126,10 @@ document.addEventListener("DOMContentLoaded", () => {
                     alert(`Erro: ${data.error}`);
                     return;
                 }
-                currentPlayingIndex = index; // Atualiza o índice atual
+                const songUrl = `/api/music/${encodeURIComponent(data.current_song)}`;
+                audioPlayer.src = songUrl;
+                audioPlayer.play();
                 currentSongDisplay.textContent = `🎶 Tocando agora: ${data.current_song}`;
-                startTimer(); // Inicia o temporizador
             })
             .catch((err) => console.error("Erro ao iniciar a música:", err));
     };
@@ -136,14 +139,15 @@ document.addEventListener("DOMContentLoaded", () => {
         fetch("/api/stop", { method: "POST" })
             .then((response) => response.json())
             .then((data) => {
-                if (data.status === "stopped") {
-                    clearInterval(intervalId); // Para o temporizador
-                    currentPlayingIndex = -1; // Reseta o índice atual
-                    currentSongDisplay.textContent = "Nenhuma música tocando";
-                    timeDisplay.textContent = "Tempo reproduzido: 00:00";
-                    progressBar.value = 0; // Reseta a barra de progresso
-                    alert("Música parada com sucesso.");
+                if (data.error) {
+                    alert(`Erro: ${data.error}`);
+                    return;
                 }
+                audioPlayer.pause();
+                audioPlayer.currentTime = 0;
+                currentSongDisplay.textContent = "Nenhuma música tocando";
+                timeDisplay.textContent = "Tempo reproduzido: 00:00";
+                progressBar.value = 0;
             })
             .catch((error) => console.error("Erro ao parar a música:", error));
     };
@@ -229,6 +233,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Event listeners
     document.getElementById("play").addEventListener("click", () => playSong(0));
+    document.getElementById("stop").addEventListener("click", stopSong);
     document.getElementById("stop").addEventListener("click", stopSong);
     document.getElementById("repeat").addEventListener("click", toggleRepeat);
     document.getElementById("shuffle").addEventListener("click", toggleShuffle);

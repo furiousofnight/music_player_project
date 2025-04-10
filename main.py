@@ -1,7 +1,13 @@
+import os
 from music_player import MusicPlayer
 
+IS_RENDER = os.getenv("RENDER") == "true"
 
 def main():
+    if IS_RENDER:
+        print("Este script não pode ser executado no Fly.io. Use o navegador para reproduzir músicas.")
+        return
+
     player = MusicPlayer(music_folder="songs")
     while True:
         print("\n🎵 MENU DO PLAYER 🎵")

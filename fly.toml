@@ -8,7 +8,7 @@ primary_region = "gig"        # Região principal para o deploy
   RENDER = "true"             # Variável de ambiente para desativar pygame no Fly.io
 
 [http_service]
-  internal_port = 8080        # Porta interna usada pelo Gunicorn
+  internal_port = 8080        # Mantém a porta interna como 8080
   force_https = true          # Redireciona todo o tráfego para HTTPS
   auto_stop_machines = "stop" # Para máquinas inativas automaticamente
   auto_start_machines = true  # Inicia máquinas automaticamente quando necessário

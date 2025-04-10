@@ -2,7 +2,11 @@ from mutagen import File, MutagenError  # Para analisar duração do arquivo de 
 import os
 import threading
 import random
-import pygame
+
+IS_RENDER = os.getenv("RENDER") == "true"
+
+if not IS_RENDER:
+    import pygame  # Importa pygame apenas se não estiver no Fly.io
 
 
 def _normalize_string(string: str) -> str:
@@ -13,6 +17,17 @@ def _normalize_string(string: str) -> str:
 class MusicPlayer:
     def __init__(self, music_folder: str = "songs"):
         """Inicializa o reprodutor de música."""
+        if IS_RENDER:
+            # Desativa o uso do pygame no Fly.io
+            self.music_folder = music_folder
+            self.music_list: list[str] = []
+            self.current_index: int = -1
+            self.playing: bool = False
+            self.genres: dict[str, list[str]] = {}
+            self._load_musics()
+            return
+
+        # Inicialização do pygame
         try:
             pygame.init()
             pygame.mixer.init()
