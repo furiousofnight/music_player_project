@@ -3,32 +3,22 @@ import os
 import threading
 import random
 import pygame
-import logging
-
-# Detecta se está em ambiente de produção (Render, CI/CD, etc)
-IS_RENDER = os.environ.get("RENDER", "false").lower() == "true"
-
-# Inicialização segura do pygame
-if not IS_RENDER:
-    try:
-        import pygame
-        pygame.init()
-        pygame.mixer.init()
-    except ImportError:
-        logging.warning("pygame não está disponível. Ignorando inicialização.")
-    except pygame.error as error:
-        raise RuntimeError(f"Erro ao inicializar o pygame: {error}")
-else:
-    logging.warning("Modo servidor detectado — pygame não será inicializado.")
 
 
 def _normalize_string(string: str) -> str:
-    """Normaliza uma string para facilitar comparações."""
+    """Normaliza 'strings' para buscas consistentes."""
     return string.lower().strip().replace("-", " ").replace("_", " ")
 
 
 class MusicPlayer:
     def __init__(self, music_folder: str = "songs"):
+        """Inicializa o reprodutor de música."""
+        try:
+            pygame.init()
+            pygame.mixer.init()
+        except pygame.error as error:
+            raise RuntimeError(f"Erro ao inicializar o pygame: {error}")
+
         self.music_folder = music_folder
         self.music_list: list[str] = []
         self.current_index: int = -1
@@ -40,10 +30,11 @@ class MusicPlayer:
         self.genres: dict[str, list[str]] = {}
         self.duration_cache: dict[str, int] = {}
         self.position: int = 0
+
         self._load_musics()
 
     def _load_musics(self) -> None:
-        """Carrega as músicas do diretório especificado."""
+        """Carrega músicas da pasta e organiza por gênero."""
         self.music_list.clear()
         if not os.path.exists(self.music_folder):
             os.makedirs(self.music_folder)
@@ -62,7 +53,7 @@ class MusicPlayer:
         self._cache_song_durations()
 
     def _cache_song_durations(self) -> None:
-        """Cacheia a duração das músicas para evitar cálculos repetidos."""
+        """Carrega e armazena a duração de cada música."""
         for song in self.music_list:
             if song not in self.duration_cache:
                 try:
@@ -72,7 +63,7 @@ class MusicPlayer:
                     else:
                         self.duration_cache[song] = 0
                 except (MutagenError, AttributeError) as e:
-                    logging.warning("Erro ao processar duração de '%s': %s", song, e)
+                    print(f"Erro ao processar duração de '{song}': {e}")
                     self.duration_cache[song] = 0
 
     def get_current_duration(self) -> int:
@@ -82,17 +73,15 @@ class MusicPlayer:
         return 0
 
     def play_music(self, query: int | str | None = None) -> None:
-        """Reproduz uma música com base no índice ou nome."""
-        if IS_RENDER:
-            logging.warning("Reprodução de áudio desativada no ambiente Render.")
-            return
-
+        """Reproduz uma música (por índice, nome ou aleatória)."""
         with self.lock:
             if not self.music_list:
-                logging.warning("Nenhuma música disponível.")
+                print("Nenhuma música disponível.")
                 return
 
             if isinstance(query, int):
+                if query < 0:  # Ajusta para o último índice se o índice for negativo
+                    query = len(self.music_list) - 1
                 if 0 <= query < len(self.music_list):
                     self.current_index = query
                 else:
@@ -113,46 +102,40 @@ class MusicPlayer:
             self._play_current_music()
 
     def _play_next_random(self) -> None:
-        """Reproduz uma música aleatória sem repetir até que todas sejam tocadas."""
-        if IS_RENDER:
-            logging.warning("Reprodução de áudio desativada no ambiente Render.")
-            return
-
+        """Reproduz uma música aleatória sem repetições."""
         if not self.music_list:
-            logging.warning("Nenhuma música disponível para reprodução.")
+            print("Nenhuma música disponível para reprodução.")
             return
 
+        # Gera uma lista de índices restantes que ainda não foram tocados
         remaining = [i for i in range(len(self.music_list)) if i not in self.played_indices]
-        if not remaining:
+        if not remaining:  # Se todas as músicas já foram tocadas, reinicia a lista
             self.played_indices.clear()
             remaining = list(range(len(self.music_list)))
 
+        # Escolhe uma música aleatória dos índices restantes
         self.current_index = random.choice(remaining)
         self.played_indices.append(self.current_index)
         self._play_current_music()
 
     def _play_current_music(self) -> None:
-        """Reproduz a música atual."""
-        if IS_RENDER:
-            return
+        """Inicia a música atual."""
         try:
-            logging.info("Carregando música: %s", self.music_list[self.current_index])
             pygame.mixer.music.load(self.music_list[self.current_index])
             pygame.mixer.music.play(-1 if self.loop else 0)
             self.position = 0
             self.playing = True
         except pygame.error as e:
-            logging.error("Erro ao carregar a música: %s", e)
+            print(f"Erro ao carregar a música: {e}")
             self.playing = False
 
     def stop(self) -> None:
         """Para a reprodução da música."""
-        if not IS_RENDER:
-            pygame.mixer.music.stop()
+        pygame.mixer.music.stop()
         self.playing = False
 
     def toggle_shuffle_without_repeat(self) -> bool:
-        """Ativa ou desativa o modo shuffle sem repetição."""
+        """Ativa ou desativa o modo shuffle sem repetições."""
         self.shuffle_without_repeat = not self.shuffle_without_repeat
         return self.shuffle_without_repeat
 
@@ -162,13 +145,27 @@ class MusicPlayer:
         return self.loop
 
     def show_info(self) -> dict:
-        """Retorna informações sobre a música atual."""
+        """Retorna informações sobre a música atual e gerencia a reprodução automática."""
         if self.current_index < 0 or self.current_index >= len(self.music_list):
             return {"error": "Nenhuma música está tocando."}
 
         music = self.music_list[self.current_index]
-        elapsed = self.position if IS_RENDER else max(0, pygame.mixer.music.get_pos() // 1000)
+        elapsed = max(0, pygame.mixer.music.get_pos() // 1000)
         self.position = elapsed
+
+        # Verifica se a música terminou
+        if not pygame.mixer.music.get_busy() and elapsed >= self.get_current_duration():
+            with self.lock:
+                if self.loop:
+                    self._play_current_music()  # Reinicia a música atual no modo repeat
+                elif self.shuffle_without_repeat:
+                    self._play_next_random()  # Reproduz uma música aleatória no modo shuffle
+                else:
+                    self.current_index += 1  # Avança para a próxima música
+                    if self.current_index >= len(self.music_list):  # Se for a última música
+                        self.current_index = 0  # Volta para a primeira música
+                    self._play_current_music()  # Reproduz a próxima música
+
         return {
             "current_song": os.path.basename(music),
             "time_played": elapsed,
@@ -178,11 +175,7 @@ class MusicPlayer:
         }
 
     def set_position(self, time: int) -> None:
-        """Define a posição de reprodução da música."""
-        if IS_RENDER:
-            logging.warning("Setar posição desativado no ambiente Render.")
-            return
-
+        """Ajusta a posição da música."""
         if not self.playing or self.current_index == -1:
             raise Exception("Nenhuma música está tocando.")
 
@@ -196,35 +189,21 @@ class MusicPlayer:
         try:
             pygame.mixer.music.stop()
             pygame.mixer.music.play(loops=-1 if self.loop else 0, start=time)
-            self.position = time
+            self.position = time  # Atualiza a posição atual
         except pygame.error as e:
-            raise Exception(f"Erro ao ajustar posição: {e}") from e
+            raise Exception(f"Erro ao ajustar posição: {str(e)}")
 
     def select_genre(self, genre: str) -> None:
-        """Seleciona um gênero e atualiza a playlist."""
+        """Filtra músicas por gênero."""
         if genre not in self.genres:
             raise ValueError("Gênero não encontrado.")
         self.music_list = self.genres[genre]
         self.current_index = -1
 
     def reset_playlist(self) -> None:
-        """Restaura a playlist original."""
+        """Restaura a playlist completa."""
         self._load_musics()
 
     def quit(self) -> None:
-        """Finaliza o player."""
-        if not IS_RENDER:
-            pygame.mixer.quit()
-
-    def clear_duration_cache(self) -> None:
-        """Limpa o cache de durações para recálculo."""
-        self.duration_cache.clear()
-        self._cache_song_durations()
-
-    def update_duration_cache(self, song_path: str) -> None:
-        """Atualiza a duração de uma música específica."""
-        self._cache_song_durations()
-        if song_path in self.duration_cache:
-            return self.duration_cache[song_path]
-        else:
-            return 0
+        """Finaliza o mixer do pygame."""
+        pygame.mixer.quit()

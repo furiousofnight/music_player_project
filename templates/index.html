@@ -16,7 +16,7 @@
     <header>
         <h1>🎧 Bem-vindo ao Music Player 🎧</h1>
         <h2>FURIOUSOFNIGHT MUSIC</h2>
-        <p>🎸 Selecione o gênero que deseja ouvir antes de começar! 🎸</p>
+        <p>🎸Selecione o gênero que deseja ouvir antes de começar!🎸</p>
     </header>
 
     <!-- Conteúdo Principal -->
@@ -35,7 +35,7 @@
             </button>
         </section>
 
-        <!-- Player de Música -->
+        <!-- Music Player -->
         <section class="player" aria-labelledby="player-section-title">
             <h2 id="player-section-title">🎶 Player de Música 🎶</h2>
             <div class="info">
@@ -49,8 +49,9 @@
                 </div>
             </div>
             <div class="controls">
-                <button id="prev" class="control-btn" aria-label="Música anterior"><i
-                        class="fas fa-step-backward"></i></button>
+                <button id="prev" class="control-btn" aria-label="Música anterior">
+                    <i class="fas fa-step-backward"></i>
+                </button>
                 <button id="play" class="control-btn" aria-label="Reproduzir música"><i
                         class="fas fa-play"></i></button>
                 <button id="stop" class="control-btn" aria-label="Parar música"><i class="fas fa-stop"></i></button>
@@ -58,10 +59,12 @@
                         class="fas fa-step-forward"></i></button>
             </div>
             <div class="modes">
-                <button id="shuffle" class="mode-btn" aria-label="Ativar/desativar Shuffle"><i
-                        class="fas fa-random"></i> Shuffle</button>
-                <button id="repeat" class="mode-btn" aria-label="Ativar/desativar Repeat"><i
-                        class="fas fa-redo-alt"></i> Repeat</button>
+                <button id="shuffle" class="mode-btn" aria-label="Ativar/desativar Shuffle">
+                    <i class="fas fa-random"></i> Shuffle
+                </button>
+                <button id="repeat" class="mode-btn" aria-label="Ativar/desativar Repeat">
+                    <i class="fas fa-redo-alt"></i> Repeat
+                </button>
             </div>
         </section>
 
@@ -70,23 +73,12 @@
             <h2 id="playlist-section-title">🎵 Playlist 🎵</h2>
             <ul id="playlist" aria-live="polite"></ul>
         </section>
-
-        <!-- Informações Finais -->
-        <section class="footer-info">
-            <p>🎶 Reproduzindo músicas 100% GRATUITAS 🎶</p>
-        </section>
     </main>
 
     <!-- Rodapé -->
     <footer>
-        <p>🎵 Desenvolvido por FURIOUSOFNIGHT | &copy; 2026 - Furious Music Player 🎵</p>
+        <p>🎵Desenvolvido Por FURIOUSOFNIGHT | &copy; 2026 - Furious Music Player🎵</p>
     </footer>
-
-    <!-- Áudio dinâmico -->
-    <audio id="audio-player" controls>
-        <source id="audio-source" src="" type="audio/mpeg">
-        Seu navegador não suporta o elemento de áudio.
-    </audio>
 
     <script src="/static/js/script.js"></script>
 </body>

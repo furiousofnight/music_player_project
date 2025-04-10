@@ -1,4 +1,5 @@
 document.addEventListener("DOMContentLoaded", () => {
+    // Elementos principais
     const genreSelect = document.getElementById("genre-select");
     const loadGenreButton = document.getElementById("load-genre");
     const playlistElement = document.getElementById("playlist");
@@ -6,102 +7,86 @@ document.addEventListener("DOMContentLoaded", () => {
     const genreDisplay = document.getElementById("genre");
     const timeDisplay = document.getElementById("time");
     const progressBar = document.getElementById("progress-bar");
-    const audioPlayer = document.getElementById("audio-player");
 
-    let intervalId = null;
-    let userSeeking = false;
-    let currentPlayingIndex = -1;
-    let isRepeatActive = false;
-    let isShuffleActive = false;
-    let isProcessing = false;
+    let intervalId = null; // ID do intervalo de atualização
+    let userSeeking = false; // Indica se o usuário está manipulando a barra de progresso
+    let currentPlayingIndex = -1; // Índice da música atual
+    let isRepeatActive = false; // Estado do botão repetir (sincronizado com o backend)
+    let isShuffleActive = false; // Estado do modo shuffle (sincronizado com o backend)
+    let isProcessing = false; // Controle de cliques repetidos (ex.: repeat/shuffle)
 
-    const toggleRepeat = async () => {
-        if (isProcessing) return;
-        isProcessing = true;
-        const repeatBtn = document.getElementById("repeat");
-        try {
-            const response = await fetch("/api/repeat", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-            });
-            if (!response.ok) throw new Error(`Erro no backend (Repeat): ${response.status}`);
-            const data = await response.json();
-            isRepeatActive = data.repeat_status === "ativado";
-            repeatBtn.classList.toggle("active", isRepeatActive);
-            alert(`Modo repetir ${isRepeatActive ? "ativado" : "desativado"}`);
-        } catch (error) {
-            console.error("Erro ao alternar modo repetir:", error);
-        } finally {
-            isProcessing = false;
-        }
+    // Ativar/desativar o modo shuffle
+    const toggleShuffle = () => {
+        fetch("/api/shuffle", { method: "POST", headers: { "Content-Type": "application/json" } })
+            .then((response) => response.json())
+            .then((data) => {
+                const shuffleBtn = document.getElementById("shuffle");
+                shuffleBtn.classList.toggle("active", data.shuffle_status === "ativado");
+                alert(`Modo shuffle ${data.shuffle_status}`);
+            })
+            .catch((error) => console.error("Erro ao alternar modo shuffle:", error));
     };
 
-    const toggleShuffle = async () => {
-        if (isProcessing) return;
-        isProcessing = true;
-        const shuffleBtn = document.getElementById("shuffle");
-        try {
-            const response = await fetch("/api/shuffle", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-            });
-            if (!response.ok) throw new Error(`Erro no backend (Shuffle): ${response.status}`);
-            const data = await response.json();
-            isShuffleActive = data.shuffle_status === "ativado";
-            shuffleBtn.classList.toggle("active", isShuffleActive);
-            alert(`Modo shuffle ${isShuffleActive ? "ativado" : "desativado"}`);
-        } catch (error) {
-            console.error("Erro ao alternar modo shuffle:", error);
-        } finally {
-            isProcessing = false;
-        }
+    // Ativar/desativar o modo repeat
+    const toggleRepeat = () => {
+        fetch("/api/repeat", { method: "POST", headers: { "Content-Type": "application/json" } })
+            .then((response) => response.json())
+            .then((data) => {
+                const repeatBtn = document.getElementById("repeat");
+                repeatBtn.classList.toggle("active", data.repeat_status === "ativado");
+                alert(`Modo repetir ${data.repeat_status}`);
+            })
+            .catch((error) => console.error("Erro ao alternar modo repetir:", error));
     };
 
-    const loadGenres = async () => {
-        try {
-            const response = await fetch("/api/genres");
-            if (!response.ok) throw new Error(`Erro ao carregar gêneros: ${response.status}`);
-            const data = await response.json();
-            const genres = data.genres || {};
-            genreSelect.innerHTML = "<option value='' disabled selected>Selecione um gênero</option>";
+    // Carregar gêneros
+    const loadGenres = () => {
+        fetch("/api/genres")
+            .then((response) => {
+                if (!response.ok) throw new Error(`Erro ao carregar gêneros: ${response.status}`);
+                return response.json();
+            })
+            .then((data) => {
+                const genres = data.genres || {};
+                genreSelect.innerHTML = "<option value='' disabled selected>Selecione um gênero</option>";
 
-            if (!Object.keys(genres).length) {
-                alert("Nenhum gênero disponível!");
-                return;
-            }
+                if (!Object.keys(genres).length) {
+                    alert("Nenhum gênero disponível!");
+                    return;
+                }
 
-            Object.keys(genres).forEach((genre) => {
-                const option = document.createElement("option");
-                option.value = genre;
-                option.textContent = capitalize(genre);
-                genreSelect.appendChild(option);
-            });
-        } catch (error) {
-            console.error("Erro ao carregar gêneros:", error);
-        }
+                Object.keys(genres).forEach((genre) => {
+                    const option = document.createElement("option");
+                    option.value = genre;
+                    option.textContent = capitalize(genre);
+                    genreSelect.appendChild(option);
+                });
+            })
+            .catch((error) => console.error("Erro ao carregar gêneros:", error));
     };
 
-    const loadGenrePlaylist = async () => {
+    // Carregar músicas do gênero selecionado
+    const loadGenrePlaylist = () => {
         const selectedGenre = genreSelect.value;
         if (!selectedGenre) {
             alert("Selecione um gênero.");
             return;
         }
 
-        try {
-            const response = await fetch("/api/select_genre", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ genre: selectedGenre }),
-            });
-            if (!response.ok) throw new Error(`Erro ao carregar playlist do gênero: ${response.status}`);
-            const data = await response.json();
-            updatePlaylistDisplay(data.playlist || [], selectedGenre);
-        } catch (error) {
-            console.error("Erro ao carregar a playlist do gênero:", error);
-        }
+        fetch("/api/select_genre", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ genre: selectedGenre }),
+        })
+            .then((response) => {
+                if (!response.ok) throw new Error(`Erro ao carregar playlist do gênero: ${response.status}`);
+                return response.json();
+            })
+            .then((data) => updatePlaylistDisplay(data.playlist || [], selectedGenre))
+            .catch((error) => console.error("Erro ao carregar a playlist do gênero:", error));
     };
 
+    // Atualizar exibição da playlist
     const updatePlaylistDisplay = (playlist, genre) => {
         genreDisplay.textContent = `Gênero: ${capitalize(genre) || "Desconhecido"}`;
         playlistElement.innerHTML = "";
@@ -126,72 +111,114 @@ document.addEventListener("DOMContentLoaded", () => {
         progressBar.value = 0;
     };
 
-    const playSong = async (index) => {
-        try {
-            const response = await fetch("/api/play", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ index }),
-            });
-            const data = await response.json();
-            if (data.error) {
-                alert(`Erro: ${data.error}`);
-                return;
-            }
-
-            audioPlayer.src = data.song_url;
-            audioPlayer.play();
-
-            currentSongDisplay.textContent = `🎶 Tocando agora: ${data.current_song}`;
-            startTimer();
-        } catch (err) {
-            console.error("Erro ao iniciar a música:", err);
-        }
+    // Reproduzir música por índice
+    const playSong = (index) => {
+        fetch("/api/play", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ index }),
+        })
+            .then((response) => response.json())
+            .then((data) => {
+                if (data.error) {
+                    alert(`Erro: ${data.error}`);
+                    return;
+                }
+                currentPlayingIndex = index; // Atualiza o índice atual
+                currentSongDisplay.textContent = `🎶 Tocando agora: ${data.current_song}`;
+                startTimer(); // Inicia o temporizador
+            })
+            .catch((err) => console.error("Erro ao iniciar a música:", err));
     };
 
-    const stopSong = async () => {
-        try {
-            await fetch("/api/stop", { method: "POST" });
-            clearInterval(intervalId); // Limpa o temporizador
-            currentPlayingIndex = -1;
-            currentSongDisplay.textContent = "Nenhuma música tocando";
-            timeDisplay.textContent = "Tempo reproduzido: 00:00";
-            progressBar.value = 0;
-        } catch (error) {
-            console.error("Erro ao parar a música:", error);
-        }
+    // Parar música
+    const stopSong = () => {
+        fetch("/api/stop", { method: "POST" })
+            .then((response) => response.json())
+            .then((data) => {
+                if (data.status === "stopped") {
+                    clearInterval(intervalId); // Para o temporizador
+                    currentPlayingIndex = -1; // Reseta o índice atual
+                    currentSongDisplay.textContent = "Nenhuma música tocando";
+                    timeDisplay.textContent = "Tempo reproduzido: 00:00";
+                    progressBar.value = 0; // Reseta a barra de progresso
+                    alert("Música parada com sucesso.");
+                }
+            })
+            .catch((error) => console.error("Erro ao parar a música:", error));
     };
 
+    // Iniciar temporizador de progresso
     const startTimer = () => {
-        clearInterval(intervalId); // Limpa intervalos anteriores
+        clearInterval(intervalId);
         intervalId = setInterval(() => {
-            if (!audioPlayer.paused) {
-                const currentTime = Math.floor(audioPlayer.currentTime);
-                const duration = Math.floor(audioPlayer.duration || 0);
-                updateProgressBar(currentTime, duration);
-            }
+            fetch("/api/info")
+                .then((response) => response.json())
+                .then((data) => {
+                    if (data.info.current_song === "Nenhuma música tocando") {
+                        clearInterval(intervalId);
+                        currentSongDisplay.textContent = "Nenhuma música tocando";
+                        timeDisplay.textContent = "Tempo reproduzido: 00:00";
+                        progressBar.value = 0;
+                        return;
+                    }
+
+                    // Atualiza a barra de progresso
+                    updateProgressBar(data.info.time_played, data.info.duration);
+
+                    // Atualiza o nome da música se mudou
+                    if (currentSongDisplay.textContent !== `🎶 Tocando agora: ${data.info.current_song}`) {
+                        currentSongDisplay.textContent = `🎶 Tocando agora: ${data.info.current_song}`;
+                    }
+                })
+                .catch((error) => console.error("Erro ao atualizar progresso:", error));
         }, 1000);
     };
 
+    // Atualizar barra de progresso
     const updateProgressBar = (currentTime, duration) => {
-        if (!userSeeking) {
+        if (!userSeeking) { // Só atualizar se o usuário não estiver manipulando
             progressBar.max = duration;
             progressBar.value = currentTime;
             timeDisplay.textContent = `Tempo: ${formatTime(currentTime)} / ${formatTime(duration)}`;
         }
     };
 
+    // Quando o usuário arrasta a barra de progresso
     progressBar.addEventListener("input", () => {
-        userSeeking = true;
-        timeDisplay.textContent = `Tempo: ${formatTime(progressBar.value)} / ${formatTime(progressBar.max)}`;
+        userSeeking = true; // Indica que o usuário está manipulando
+        const currentTime = Math.floor(progressBar.value); // Garante que o valor seja inteiro
+        timeDisplay.textContent = `Tempo: ${formatTime(currentTime)} / ${formatTime(progressBar.max)}`;
     });
 
+    // Quando o usuário solta a barra de progresso
     progressBar.addEventListener("change", () => {
-        const time = parseInt(progressBar.value, 10);
-        audioPlayer.currentTime = time;
-        userSeeking = false;
+        const time = Math.floor(progressBar.value); // Garante que o valor seja inteiro
+        fetch("/api/set_position", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ time }), // Atualiza o tempo no backend
+        })
+            .then((response) => {
+                if (!response.ok) throw new Error("Erro ao ajustar posição");
+                return response.json();
+            })
+            .then((data) => {
+                if (data.success) {
+                    userSeeking = false; // Indica que o usuário terminou de ajustar
+                    progressBar.value = data.current_time; // Atualiza a barra de progresso com o tempo ajustado
+                    timeDisplay.textContent = `Tempo: ${formatTime(data.current_time)} / ${formatTime(data.duration)}`;
+                } else {
+                    console.error("Erro ao ajustar posição:", data.error);
+                }
+            })
+            .catch((error) => {
+                console.error("Erro ao ajustar posição:", error);
+                userSeeking = false; // Certifica-se de que volta ao estado padrão
+            });
     });
 
+    // Funções auxiliares
     const capitalize = (str) => str.charAt(0).toUpperCase() + str.slice(1);
     const formatTime = (seconds) => {
         const mins = Math.floor(seconds / 60);
@@ -200,12 +227,40 @@ document.addEventListener("DOMContentLoaded", () => {
     };
     const extractSongName = (path) => path.split("/").pop().replace(/\.(mp3|wav|ogg|flac)$/i, "");
 
-    // Eventos dos botões
+    // Event listeners
     document.getElementById("play").addEventListener("click", () => playSong(0));
     document.getElementById("stop").addEventListener("click", stopSong);
     document.getElementById("repeat").addEventListener("click", toggleRepeat);
     document.getElementById("shuffle").addEventListener("click", toggleShuffle);
     loadGenreButton.addEventListener("click", loadGenrePlaylist);
+    document.getElementById("next").addEventListener("click", () => {
+        fetch("/api/next", { method: "POST" })
+            .then((response) => response.json())
+            .then((data) => {
+                if (data.error) {
+                    alert(data.error);
+                    return;
+                }
+                currentSongDisplay.textContent = `🎶 Tocando agora: ${data.current_song}`;
+                startTimer(); // Reinicia o temporizador
+            })
+            .catch((error) => console.error("Erro ao ir para a próxima música:", error));
+    });
 
+    document.getElementById("prev").addEventListener("click", () => {
+        fetch("/api/previous", { method: "POST" })
+            .then((response) => response.json())
+            .then((data) => {
+                if (data.error) {
+                    alert(data.error);
+                    return;
+                }
+                currentSongDisplay.textContent = `🎶 Tocando agora: ${data.current_song}`;
+                startTimer(); // Reinicia o temporizador
+            })
+            .catch((error) => console.error("Erro ao voltar para a música anterior:", error));
+    });
+
+    // Carregar gêneros ao iniciar
     loadGenres();
 });
