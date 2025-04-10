@@ -17,13 +17,16 @@ def _normalize_string(string: str) -> str:
 class MusicPlayer:
     def __init__(self, music_folder: str = "songs"):
         """Inicializa o reprodutor de música."""
+        self.music_folder = music_folder
+        self.music_list: list[str] = []
+        self.current_index: int = -1
+        self.playing: bool = False
+        self.genres: dict[str, list[str]] = {}
+        self.duration_cache: dict[str, int] = {}  # Inicializa o atributo duration_cache
+        self.position: int = 0
+
         if IS_RENDER:
             # Desativa o uso do pygame no Fly.io
-            self.music_folder = music_folder
-            self.music_list: list[str] = []
-            self.current_index: int = -1
-            self.playing: bool = False
-            self.genres: dict[str, list[str]] = {}
             self._load_musics()
             return
 
@@ -34,17 +37,10 @@ class MusicPlayer:
         except pygame.error as error:
             raise RuntimeError(f"Erro ao inicializar o pygame: {error}")
 
-        self.music_folder = music_folder
-        self.music_list: list[str] = []
-        self.current_index: int = -1
-        self.playing: bool = False
         self.loop: bool = False
         self.shuffle_without_repeat: bool = False
         self.played_indices: list[int] = []
         self.lock = threading.Lock()
-        self.genres: dict[str, list[str]] = {}
-        self.duration_cache: dict[str, int] = {}
-        self.position: int = 0
 
         self._load_musics()
 
