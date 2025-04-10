@@ -4,10 +4,11 @@ from music_player import MusicPlayer
 import logging
 import os
 from threading import Lock
+from mimetypes import guess_type
 
 # Configuração do Flask
 app = Flask(__name__, static_folder="static", template_folder="templates")
-CORS(app)
+CORS(app, resources={r"/api/*": {"origins": "*"}})
 
 # Configuração do logger
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
@@ -249,8 +250,11 @@ def set_position():
 def serve_music(filename):
     """Serve arquivos de música para o navegador."""
     try:
-        return send_from_directory(MUSIC_FOLDER, filename, as_attachment=False)
+        file_path = os.path.join(MUSIC_FOLDER, filename)
+        mime_type, _ = guess_type(file_path)
+        return send_from_directory(MUSIC_FOLDER, filename, mimetype=mime_type, as_attachment=False)
     except FileNotFoundError:
+        logging.error(f"Arquivo não encontrado: {filename}")
         return jsonify({"error": "Arquivo não encontrado."}), 404
 
 

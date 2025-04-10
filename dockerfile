@@ -21,6 +21,9 @@ RUN python -m pip install -r requirements.txt
 WORKDIR /app
 COPY . /app
 
+# Cria diretório para músicas
+RUN mkdir -p /app/songs && chmod -R 755 /app/songs
+
 # Cria usuário não-root
 RUN adduser -u 5678 --disabled-password --gecos "" appuser && chown -R appuser /app
 USER appuser
