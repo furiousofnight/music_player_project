@@ -175,7 +175,8 @@ header p {
 }
 
 #progress-bar {
-    width: 80%;
+    width: 100%;
+    max-width: 500px;
     cursor: pointer;
     background: #ddd;
     height: 5px;
@@ -227,6 +228,14 @@ header p {
     background: rgba(255, 255, 255, 0.4);
 }
 
+/* Botões ativos */
+.mode-btn.active {
+    background: #ffc857;
+    color: #1d1d1d;
+    font-weight: bold;
+    box-shadow: 0 0 10px #ffc857aa;
+}
+
 /* Playlist */
 .playlist {
     max-width: 700px;
@@ -271,4 +280,33 @@ header p {
 /* Scrollbar para LISTA */
 #playlist::-webkit-scrollbar {
     width: 8px;
+}
+
+/* Acessibilidade: foco */
+button:focus,
+input:focus,
+select:focus {
+    outline: 2px solid #ffc857;
+    outline-offset: 2px;
+}
+
+/* Responsividade */
+@media (max-width: 600px) {
+    .controls,
+    .modes {
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+
+    .control-btn,
+    .mode-btn {
+        padding: 10px 12px;
+        font-size: 1rem;
+    }
+
+    .player,
+    .genre-selection,
+    .playlist {
+        margin: 1rem;
+    }
 }

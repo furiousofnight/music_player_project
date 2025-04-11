@@ -12,15 +12,17 @@
 </head>
 
 <body>
+
     <!-- Cabeçalho -->
     <header>
         <h1>🎧 Bem-vindo ao Music Player 🎧</h1>
         <h2>FURIOUSOFNIGHT MUSIC</h2>
-        <p>🎸Selecione o gênero que deseja ouvir antes de começar!🎸</p>
+        <p>🎸 Selecione o gênero que deseja ouvir antes de começar! 🎸</p>
     </header>
 
     <!-- Conteúdo Principal -->
     <main>
+
         <!-- Seleção de Gênero -->
         <section class="genre-selection" aria-labelledby="genre-selection-title">
             <h2 id="genre-selection-title">🎸 Escolha o seu Gênero 🎸</h2>
@@ -35,34 +37,44 @@
             </button>
         </section>
 
-        <!-- Music Player -->
+        <!-- Player de Música -->
         <section class="player" aria-labelledby="player-section-title">
             <h2 id="player-section-title">🎶 Player de Música 🎶</h2>
+
             <div class="info">
                 <h2 id="current-song">Nenhuma música tocando</h2>
                 <p id="genre">Gênero: N/A</p>
-                <p id="time">Tempo reproduzido: 00:00</p>
+                <p id="time">Tempo: 00:00 / 00:00</p>
+
                 <div class="progress-container">
                     <label for="progress-bar" class="sr-only">Barra de progresso da música</label>
                     <input id="progress-bar" type="range" min="0" max="100" value="0" step="0.1"
                         aria-label="Barra de progresso">
                 </div>
             </div>
+
+            <!-- Controles de Reprodução -->
             <div class="controls">
                 <button id="prev" class="control-btn" aria-label="Música anterior">
                     <i class="fas fa-step-backward"></i>
                 </button>
-                <button id="play" class="control-btn" aria-label="Reproduzir música"><i
-                        class="fas fa-play"></i></button>
-                <button id="stop" class="control-btn" aria-label="Parar música"><i class="fas fa-stop"></i></button>
-                <button id="next" class="control-btn" aria-label="Próxima música"><i
-                        class="fas fa-step-forward"></i></button>
+                <button id="play" class="control-btn" aria-label="Reproduzir música atual">
+                    <i class="fas fa-play"></i>
+                </button>
+                <button id="stop" class="control-btn" aria-label="Parar reprodução">
+                    <i class="fas fa-stop"></i>
+                </button>
+                <button id="next" class="control-btn" aria-label="Próxima música">
+                    <i class="fas fa-step-forward"></i>
+                </button>
             </div>
+
+            <!-- Modos de Reprodução -->
             <div class="modes">
-                <button id="shuffle" class="mode-btn" aria-label="Ativar/desativar Shuffle">
+                <button id="shuffle" class="mode-btn" aria-label="Ativar ou desativar modo Shuffle">
                     <i class="fas fa-random"></i> Shuffle
                 </button>
-                <button id="repeat" class="mode-btn" aria-label="Ativar/desativar Repeat">
+                <button id="repeat" class="mode-btn" aria-label="Ativar ou desativar modo Repeat">
                     <i class="fas fa-redo-alt"></i> Repeat
                 </button>
             </div>
@@ -73,13 +85,15 @@
             <h2 id="playlist-section-title">🎵 Playlist 🎵</h2>
             <ul id="playlist" aria-live="polite"></ul>
         </section>
+
     </main>
 
     <!-- Rodapé -->
     <footer>
-        <p>🎵Desenvolvido Por FURIOUSOFNIGHT | &copy; 2026 - Furious Music Player🎵</p>
+        <p>🎵 Desenvolvido Por FURIOUSOFNIGHT | &copy; 2026 - Furious Music Player 🎵</p>
     </footer>
 
+    <!-- Script -->
     <script src="/static/js/script.js"></script>
 </body>
 
