@@ -1,32 +1,30 @@
+# Imagem base leve e segura
 FROM python:3.13.3-slim-bullseye
 
+# Expondo a porta usada pelo Gunicorn
 EXPOSE 8080
 
-# Ambiente
+# Variáveis de ambiente
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 ENV RENDER=true
 
-# Instala dependências
-COPY requirements.txt .
-RUN apt-get update && apt-get install -y libglib2.0-0 libgl1-mesa-glx && \
-    python -m pip install --upgrade pip && \
-    python -m pip install -r requirements.txt && \
-    apt-get remove -y libglib2.0-0 libgl1-mesa-glx && apt-get autoremove -y
-
-# Certifique-se de que o pygame não está sendo instalado
-RUN python -m pip install -r requirements.txt
-
-# Projeto
+# Define diretório padrão de trabalho
 WORKDIR /app
+
+# Copia arquivos de dependências e instala pacotes
+COPY requirements.txt /app/
+RUN pip install --upgrade pip && pip install -r requirements.txt
+
+# Copia o restante do projeto
 COPY . /app
 
-# Cria diretório para músicas
+# Cria diretório para músicas com permissões adequadas
 RUN mkdir -p /app/songs && chmod -R 755 /app/songs
 
-# Cria usuário não-root
-RUN adduser -u 5678 --disabled-password --gecos "" appuser && chown -R appuser /app
+# Cria e usa usuário não-root por segurança
+RUN adduser --disabled-password --gecos "" --uid 5678 appuser && chown -R appuser /app
 USER appuser
 
-# Comando de inicialização
+# Comando para iniciar o servidor com Gunicorn
 CMD ["gunicorn", "server:app", "--bind", "0.0.0.0:8080"]
