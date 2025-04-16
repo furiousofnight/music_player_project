@@ -96,7 +96,7 @@ Esse projeto foi uma jornada de aprendizado completa, com:
 
 ## 💼 Autor
 
-Desenvolvido por **FURIOUSOFNIGHT** com o apoio técnico da Queen (ChatGPT). 
+Desenvolvido por **FURIOUSOFNIGHT**. 
 
 > Este projeto é parte de um ciclo de aprendizado em programação iniciado em 2025. 
 > Orgulho de cada conquista no código. 
